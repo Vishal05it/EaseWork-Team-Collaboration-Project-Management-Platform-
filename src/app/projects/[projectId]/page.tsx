@@ -972,7 +972,7 @@ export default function ProjectDetailsPage() {
           setIsLogin(true);
           return true;
         } else {
-          setIsLogin(true);
+          setIsLogin(false);
           router.push("/login");
           return false;
         }

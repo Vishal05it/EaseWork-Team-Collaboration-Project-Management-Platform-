@@ -7,6 +7,7 @@ import { ToastContainer } from "react-toastify";
 import Loader from "./loading";
 import Footer from "./components/Footer";
 import FooterWrapper from "./footershow/page";
+import ChatWidget from "./components/ChatWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({
         <AllContext>
           <Navbar />
           {children}
+          <ChatWidget />
           <FooterWrapper />
           <ToastContainer
             position="top-right"

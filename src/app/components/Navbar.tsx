@@ -108,7 +108,7 @@ export default function Navbar() {
           setIsLogin(true);
           return true;
         } else {
-          setIsLogin(true);
+          setIsLogin(false);
           navigate.push("/login");
           return false;
         }

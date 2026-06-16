@@ -58,7 +58,7 @@ export default function SignupPage() {
         return;
       }
 
-      if (form.password.length < 8) {
+      if (form.password.trim().length < 8) {
         errorEmitter("Password must be at least 8 characters long");
         return;
       }

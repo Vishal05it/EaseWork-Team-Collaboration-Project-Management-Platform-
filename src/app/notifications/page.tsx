@@ -109,7 +109,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     if (allNotifications.length > 0) {
       setAllNotifications((prev) =>
-        [...prev].sort((a, b) => a.addedMs - b.addedMs),
+        [...prev].sort((a, b) => b.addedMs - a.addedMs),
       );
     }
   }, []);

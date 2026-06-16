@@ -64,8 +64,14 @@ type Context = {
   setActiveCount: React.Dispatch<React.SetStateAction<number>>;
   prevProject: string;
   setprevProject: React.Dispatch<React.SetStateAction<string>>;
+  botMessages: MessageAI[];
+  setBotMessages: React.Dispatch<React.SetStateAction<MessageAI[]>>;
 };
-
+type MessageAI = {
+  role: "user" | "assistant";
+  content: string;
+  addedMs: number;
+};
 type Notification = {
   _id: string;
   byUser: User;
@@ -232,6 +238,7 @@ function AllContext({ children }: { children: ReactNode }) {
   let [prevProject, setprevProject] = useState<string>("");
   const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
   let [allProjects, setAllProjects] = useState<APIData[]>([]);
+  let [botMessages, setBotMessages] = useState<MessageAI[]>([]);
   let [allTempProjects, setAllTempProjects] = useState<APIData[]>(allProjects);
   let [unreadMessages, setUnreadMessages] = useState<number>(0);
   let toggleTheme = () => {
@@ -353,6 +360,8 @@ function AllContext({ children }: { children: ReactNode }) {
         setprevProject,
         socketCall,
         setSocketCall,
+        botMessages,
+        setBotMessages,
       }}
     >
       {children}

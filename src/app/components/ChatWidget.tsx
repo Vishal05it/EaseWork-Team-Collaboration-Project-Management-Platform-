@@ -120,7 +120,7 @@ export default function ChatWidget() {
         </button>
       )}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 flex h-150 w-95 flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl">
+        <div className="fixed bottom-24 left-6 z-50 flex h-150 w-95 flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b p-4">
             <div>
               <h2 className="font-semibold text-black text-lg">EaseWork AI</h2>

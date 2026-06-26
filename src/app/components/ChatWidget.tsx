@@ -114,7 +114,7 @@ export default function ChatWidget() {
       {isLogin && (
         <button
           onClick={() => setOpen(!open)}
-          className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-black dark:bg-violet-600 text-white shadow-xl transition hover:scale-105"
+          className="fixed bottom-6 left-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-black dark:bg-violet-600 text-white shadow-xl transition hover:scale-105"
         >
           <MessageCircle size={28} />
         </button>

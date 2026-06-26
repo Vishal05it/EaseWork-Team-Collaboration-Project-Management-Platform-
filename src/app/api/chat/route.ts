@@ -3,7 +3,9 @@ import { DEFAULT_SYSTEM_PROMPT } from "@/app/lib/ai/systemPrompt";
 import { redis } from "@/app/lib/redis";
 import aichatModel from "@/app/models/aichat.model";
 import { promptToObject } from "@/app/utils/ai/promptToObject";
+import { ApiError } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
+import API from "razorpay/dist/types/api";
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
       chatHistory = await aichatModel
         .find({ messageFor: userId })
         .sort({ addedMs: -1 })
-        .limit(100);
+        .limit(50);
       chatHistory = chatHistory.reverse();
     }
     let response = await generateResponse({
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
       let updatedHistory = await aichatModel
         .find({ messageFor: userId })
         .sort({ addedMs: -1 })
-        .limit(100);
+        .limit(50);
       await redis.del(`aiChat:user:${userId}`);
       await redis.set(
         `aiChat:user:${userId}`,
@@ -99,8 +101,18 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        {
+          message:
+            "I'm currently receiving too many requests. Please try again in a few moments.",
+          success: false,
+        },
+        { status: 429 },
+      );
+    }
     return NextResponse.json({
       message: "Internal Server Error",
       success: false,

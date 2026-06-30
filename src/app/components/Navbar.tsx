@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { useAllContexts } from "../context/AllContext";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { baseURL } from "../utils/baseURL";
 import { errorEmitter, successEmitter } from "../utils/emitter";
 import Logo from "../../../public/logo-removebg-preview.png";
@@ -30,12 +29,13 @@ import { checkLogin } from "../utils/checkLogin";
 import { connectToSocket } from "../lib/socket";
 export default function Navbar() {
   const navigate = useRouter();
-  const [notifications, setNotifications] = useState<number>(0);
+  // const [notifications, setNotifications] = useState<number>(0);
   const [keyword, setKeyword] = useState<string>("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   let {
     setPageLoading,
+    setBotMessages,
     theme,
     darkMode,
     lightMode,
@@ -279,6 +279,7 @@ export default function Navbar() {
         setActiveCount(0);
         setPendingImages([]);
         setCompleteCount(0);
+        setBotMessages([]);
         setPendingProjectsCount(0);
         setUser({
           name: "",

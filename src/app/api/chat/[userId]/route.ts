@@ -4,19 +4,24 @@ import aichatModel from "@/app/models/aichat.model";
 import userModel from "@/app/models/user.model";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
-
+type Docs = {
+  messageFor: string;
+  addedMs: number;
+  content: string;
+  role: "user" | "assistant" | "system";
+};
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ userId: string }> },
 ) {
   try {
     const { userId } = await context.params;
-    let cachedHistory = await redis.get(`aiChat:user:${userId}`);
-    if (cachedHistory) {
+    let cachedBotMessages = await redis.get(`aiChatAllMessages:user:${userId}`);
+    if (cachedBotMessages) {
       return NextResponse.json({
         message: "All bot messages found from cache",
         success: true,
-        messages: JSON.parse(cachedHistory),
+        messages: JSON.parse(cachedBotMessages),
       });
     }
     await connectToDB();
@@ -24,11 +29,14 @@ export async function GET(
     if (!user)
       return NextResponse.json({ message: "User not found", success: false });
     const allMessages = await aichatModel
-      .find({ messageFor: userId })
-      .sort({ addedMs: -1 })
-      .limit(50);
+      .find({
+        messageFor: userId,
+      })
+      .sort({
+        addedMs: -1,
+      });
     await redis.set(
-      `aiChat:user:${userId}`,
+      `aiChatAllMessages:user:${userId}`,
       JSON.stringify(allMessages.reverse()),
     );
     return NextResponse.json({
@@ -85,24 +93,54 @@ export async function POST(
       ],
       ["I drink coffee while coding.", "Coffee and coding often go together."],
     ];
-    const docs = [];
+    const docs: Docs[] = [];
     const base = Date.now();
-    for (let i = 0; i < 150; i++) {
+    // console.log("******* New Iteration Started ********");
+    for (let i = 0; i < 50; i++) {
       const pair = topics[i % topics.length];
-      docs.push({
-        messageFor: userId,
-        addedMs: base + i + 1,
-        role: i % 2 === 0 ? "user" : "assistant",
-        content: pair[i % 2],
-      });
+      for (let j = 0; j < pair.length; j++) {
+        if (i != 0) {
+          if (j == 0) {
+            docs[docs.length] = {
+              messageFor: userId,
+              addedMs: docs[docs.length - 1].addedMs + 1,
+              role: j % 2 === 0 ? "user" : "assistant",
+              content: pair[j % 2],
+            };
+          } else {
+            docs[docs.length] = {
+              messageFor: userId,
+              addedMs: docs[docs.length - 1].addedMs + 1,
+              role: j % 2 === 0 ? "user" : "assistant",
+              content: pair[j % 2],
+            };
+          }
+        } else if (i == 0) {
+          if (j == 0) {
+            docs[docs.length] = {
+              messageFor: userId,
+              addedMs: base,
+              role: j % 2 === 0 ? "user" : "assistant",
+              content: pair[j % 2],
+            };
+          } else if (j == 1) {
+            docs[docs.length] = {
+              messageFor: userId,
+              addedMs: base + 1,
+              role: j % 2 === 0 ? "user" : "assistant",
+              content: pair[j % 2],
+            };
+          }
+        }
+      }
     }
-    console.log(docs);
+    //console.log("Docs : ", docs);
     await connectToDB();
     let feedData = await aichatModel.insertMany(docs);
     return NextResponse.json({
       message: "Data feeded successfully",
       success: true,
-      feedData,
+      feedData: docs,
     });
   } catch (error) {
     console.log(error);

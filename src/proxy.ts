@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export function proxy(req: NextRequest) {
   let cookieStore = req.cookies;
   let authToken = cookieStore.get("authToken")?.value;
+  //console.log("Token in proxy :", authToken);
   if (!authToken) return NextResponse.redirect(new URL("/login", req.url));
   const SECRET_KEY = process.env.SECRET_KEY;
   if (!SECRET_KEY) throw new Error("Secret key not found!");
-  let decode = jwt.verify(authToken, SECRET_KEY as string);
-  if (!decode) return NextResponse.redirect(new URL("/login", req.url));
+  if (authToken) {
+    let decode: any | JwtPayload = jwt.verify(authToken, SECRET_KEY as string);
+    // console.log("Decode : ", decode);
+    if (!decode.userId)
+      return NextResponse.redirect(new URL("/login", req.url));
+  }
   const { pathname } = req.nextUrl;
   if (
     authToken &&
@@ -29,8 +34,9 @@ export const config = {
     "/createproject",
     "/profile",
     "/editprofile",
-    "/editproject",
-    "/projects",
+    "/editproject/:path*",
+    "/editcompany",
+    "/projects/:path*",
     "/pendingusers",
     "/pendingprojects",
     "/notifications",
@@ -38,5 +44,7 @@ export const config = {
     "/changecredentials",
     "/resetpassword",
     "/companydetails",
+    "/chat:path*",
+    "/",
   ],
 };

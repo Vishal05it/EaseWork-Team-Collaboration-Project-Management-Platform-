@@ -25,12 +25,15 @@ export default function ChatWidget() {
     setIsLogin,
   } = useAllContexts();
   const router = useRouter();
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [leftIdx, setLeftIdx] = useState<number>(0);
+  const [bottomIdx, setBottomIdx] = useState<number>(0);
   const getHistory = async () => {
     try {
       setPageLoading(true);
       let response = await fetch(`${baseURL}/chat/${user._id}`);
       let chatData = await response.json();
-      //console.log(chatData);
+      console.log(chatData);
       if (chatData.success) {
         successEmitter(chatData.message);
         setBotMessages(chatData.messages);
@@ -42,8 +45,13 @@ export default function ChatWidget() {
     }
   };
   const sendMessage = async () => {
+    if (!message) {
+      errorEmitter("Cannot send empty message");
+      return;
+    }
     try {
       setLoading(true);
+
       let response = await fetch(`${baseURL}/chat`, {
         method: "POST",
         body: JSON.stringify({
@@ -102,25 +110,45 @@ export default function ChatWidget() {
     if (isLogin && user._id) {
       fetchMessages();
     }
-  }, []);
+  }, [isLogin]);
   useEffect(() => {
     let lastMsg = document.getElementById(
       `botMsgId:#pxhy:${botMessages.length - 1}`,
     );
     lastMsg?.scrollIntoView({ behavior: "smooth" });
   }, [botMessages, open]);
+  useEffect(() => {
+    if (!isLogin) {
+      setOpen(false);
+    }
+  }, [isLogin]);
+
   return (
     <>
       {isLogin && (
         <button
-          onClick={() => setOpen(!open)}
-          className="fixed bottom-6 left-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-black dark:bg-violet-600 text-white shadow-xl transition hover:scale-105"
+          // style={{
+          //   left: isDragging ? leftIdx : "24px",
+          //   top: isDragging ? bottomIdx : "80%",
+          // }}
+          onClick={() => {
+            setOpen(!open);
+          }}
+          // onMouseDown={() => {
+          //   setIsDragging(true);
+          // }}
+          // onMouseUp={() => {
+          //   setIsDragging(false);
+          // }}
+          className={`fixed bottom-6 left-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-black dark:bg-violet-600 text-white shadow-xl transition hover:scale-105`}
         >
           <MessageCircle size={28} />
         </button>
       )}
       {open && (
-        <div className="fixed bottom-24 left-6 z-50 flex h-150 w-95 flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl">
+        <div
+          className={`fixed bottom-24 left-6 z-50 flex h-150 w-115 flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl`}
+        >
           <div className="flex items-center justify-between border-b p-4">
             <div>
               <h2 className="font-semibold text-black text-lg">EaseWork AI</h2>
@@ -169,15 +197,17 @@ export default function ChatWidget() {
               <button
                 disabled={loading}
                 onClick={async () => {
-                  setBotMessages((prev) => [
-                    ...prev,
-                    addMessage("user", message),
-                  ]);
-                  setBotMessages((prev) => [
-                    ...prev,
-                    addMessage("assistant", "Thinking..."),
-                  ]);
-                  setMessage("");
+                  if (message.length > 0) {
+                    setBotMessages((prev) => [
+                      ...prev,
+                      addMessage("user", message),
+                    ]);
+                    setBotMessages((prev) => [
+                      ...prev,
+                      addMessage("assistant", "Thinking..."),
+                    ]);
+                    setMessage("");
+                  }
                   await sendMessage();
                 }}
                 className="rounded-xl bg-black p-3 text-white"

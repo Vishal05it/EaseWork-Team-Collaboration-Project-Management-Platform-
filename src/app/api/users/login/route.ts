@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       sameSite: true,
       secure: process.env.NODE_ENV === "production",
       path: "/",
+      maxAge: 5 * 24 * 60 * 60 * 1000,
     });
     await redis.set(`isLogin:userId:${userExist._id}`, JSON.stringify(true));
     await redis.set(

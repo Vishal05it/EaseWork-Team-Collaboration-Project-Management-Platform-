@@ -631,11 +631,6 @@ export const completeTask = async (userId: string, parameterObj: Parameter) => {
     let areYouMember = await memberModel
       .findOne({ user: userId, forProject: project._id })
       .select("_id user isAdmin");
-    console.log(
-      "You member ? : ",
-      areYouMember + " so member id is : ",
-      areYouMember._id,
-    );
     if (!areYouMember) return "You are not a member of this project";
     let task = await taskModel
       .findOne({
@@ -644,11 +639,6 @@ export const completeTask = async (userId: string, parameterObj: Parameter) => {
       .select("task assignedTo forProject");
     if (!task)
       return `No task like ${parameterObj.taskKeyword} could be found in ${project.title}`;
-    console.log(
-      "Task found : ",
-      task + " so task id assigned to id  : ",
-      task.assignedTo,
-    );
     if (task.assignedTo.toString() != areYouMember._id.toString()) {
       return `Task ${task.task} is not assigned to you`;
     }

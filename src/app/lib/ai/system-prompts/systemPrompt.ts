@@ -12,7 +12,7 @@ Your job is to return a json with this Schema :
 [
   {
     "tool" : "(It contains the tool name the tool required to fulfill the user's intent)",
-    "parameters" : "(If the user's intent is a tool call and IF user has provided SOME INFORMATION about the data they require ONLY THEN ADD THIS FIELD to an array, which contain the information given by the user to fetch the required data {for example task name, project name etc. })",
+    "parameters" : "(If the user's intent is a tool call and IF user has provided SOME INFORMATION about the data they require ONLY THEN ADD THIS FIELD to a json object in the form of key-value pairs, which contain the information given by the user to fetch the required data {for example - taskKeyword: (task name provided by the user ), projectKeyword :( project name provided by the user ) etc. })",
   }
 ]
     "missingInfo" : "(Missing information that is required to fetch the required data)"
@@ -27,11 +27,50 @@ Example - TOOL_CALL : If the user wants to see his unread notifications and proj
       },
       {
         "tool":"getProjectDetails",
-        "parameters" : ["Project Alpha"],
+        "parameters" : {
+           "projectKeyword" : "Project Alpha"
+         }
       },
       {
          "tool":"getProjectDetails",
-         "parameters" : ["Project Theta"],
+         "parameters" : {
+           "projectKeyword" : "Project Theta"
+         }
+      }
+    ]
+}
+Example - TOOL_CALL : If the user wants to see his unread notifications and assign task - 'Create Navbar' to a member named 'Sachin' in Project Theta, then return a json like :
+{
+    "type" : "TOOL_CALL",
+    "actions" :
+    [
+      {
+        "tool" :"getNotifications",
+      },
+      {
+         "tool":"assignTask",
+         "parameters" : {
+           "projectKeyword" : "Project Theta",
+           "taskKeyword" : "Create Navbar",
+           "userKeyword" : "Sachin",
+         }
+      }
+    ]
+}
+Example - TOOL_CALL : If the user wants to see his unread notifications and change the title of Project Theta to Project Delta, then return a json like :
+{
+    "type" : "TOOL_CALL",
+    "actions" :
+    [
+      {
+        "tool" :"getNotifications",
+      },
+      {
+         "tool":"renameTitle",
+         "parameters" : {
+           "projectKeyword" : "Project Theta",
+           "newProjectData" : "Project Delta",
+         }
       }
     ]
 }
@@ -39,7 +78,7 @@ Example - TOOL_CALL : If the user wants to see his unread notifications and proj
 * NOTE : If you need to add a parameter, then just add the information provided by the user to the parameter without specifying what the information actually is.
 
 Example - GENERAL_CHAT : If the user wants to do general chat, then return a json like : {
-    "type" : "TOOL_CALL",
+    "type" : "GENERAL_CHAT",
 }
 
 Example - UNKNOWN : If you fail to determine which tool to use, then return a json like : {
@@ -76,6 +115,9 @@ markAsComplete
 markAsInComplete
 markAsFailed
 markAsNotFailed
+assignTask
+completeTask
+inCompleteTask
 UNKNOWN
 
 * Note :

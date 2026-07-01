@@ -55,26 +55,59 @@ export const tools = [
   },
   {
     name: "markAsComplete",
-    description: "Marks the requested project as complete",
+    description:
+      "Marks ONLY THE REQUESTED PROJECT as complete or completes THE REQUESTED PROJECT",
     parameters: ["userId", "project title or description's keyword"],
     returns: "Changes Project's completion status to complete",
   },
   {
     name: "markAsInComplete",
-    description: "Marks the requested project as incomplete",
+    description:
+      "Marks ONLY THE REQUESTED PROJECT as incomplete or incompletes THE REQUESTED PROJECT",
     parameters: ["userId", "project title or description's keyword"],
     returns: "Changes Project's completion status to incomplete",
   },
   {
     name: "markAsFailed",
-    description: "Marks the requested project as failed",
+    description:
+      "Marks the requested project as failed or fails the requested project",
     parameters: ["userId", "project title or description's keyword"],
     returns: "Changes Project's progress status to failed",
   },
   {
     name: "markAsNotFailed",
-    description: "Marks the requested project as not failed",
+    description:
+      "Marks the requested project as not failed or unfails the requested project",
     parameters: ["userId", "project title or description's keyword"],
     returns: "Changes Project's progress status to not failed",
+  },
+  {
+    name: "assignTask",
+    description: "Assigns a new task to a memeber of a particular project",
+    parameters: [
+      "userId",
+      "project title or description's keyword, the name of the member to whom the task is going to be assigned and the actual task",
+    ],
+    returns: "Creates a new task for a particular project's member",
+  },
+  {
+    name: "completeTask",
+    description:
+      "Marks a task's status of a particular project to complete or completes a task in a project",
+    parameters: [
+      "userId",
+      "project title or description's keyword and the name of the actual task",
+    ],
+    returns: "Changes a task's status to complete",
+  },
+  {
+    name: "inCompleteTask",
+    description:
+      "Marks a task's status of a particular project to incomplete or incompletes a task in a project",
+    parameters: [
+      "userId",
+      "project title or description's keyword and the name of the actual task",
+    ],
+    returns: "Changes a task's status to incomplete",
   },
 ];

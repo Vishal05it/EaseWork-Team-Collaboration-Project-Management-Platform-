@@ -3,13 +3,12 @@ import { toolChooser } from "./toolChooser";
 export async function executeTool(
   tool: string,
   userId: string,
-  parameters: any[] | null,
+  parameters: any | null,
 ) {
   let toolData: any;
-  if (parameters && parameters.length > 0) {
+  if (parameters) {
     console.log("Parameter array : ", parameters);
-    console.log("Parameters received : ", ...parameters);
-    toolData = await toolChooser[tool](userId, ...parameters);
+    toolData = await toolChooser[tool](userId, parameters);
   } else toolData = await toolChooser[tool](userId);
   console.log(toolData);
   return toolData;

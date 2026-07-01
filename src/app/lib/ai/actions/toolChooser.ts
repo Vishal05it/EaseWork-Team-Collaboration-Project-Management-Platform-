@@ -4,9 +4,16 @@ import projectModel from "@/app/models/project.model";
 import taskModel from "@/app/models/task.model";
 import userModel from "@/app/models/user.model";
 import { clearAllProjects } from "@/app/utils/cacheclear/personalised/clearAllProjects";
+import { clearAllTasks } from "@/app/utils/cacheclear/shared/clearAllTasks";
 import { clearProjectDetails } from "@/app/utils/cacheclear/shared/clearProjectDetails";
 import { getRealDate } from "@/app/utils/DateFormat";
 import { deadLineCalc } from "@/app/utils/DeadlineCalc";
+type Parameter = {
+  projectKeyword: string;
+  taskKeyword: string;
+  userKeyword: string;
+  newProjectData: string;
+};
 type CleanProject = {
   title: string;
   description: string;
@@ -18,9 +25,15 @@ type CleanProject = {
 type CleanTask = {
   task: string;
   projectTitle: string;
-
   projectDeadine: string;
   completed: boolean;
+};
+type CleanAssignedTask = {
+  task: string;
+  projectTitle: string;
+  projectDeadine: string;
+  completed: boolean;
+  assignedTo: string;
 };
 type CleanProfile = {
   name: string;
@@ -32,6 +45,7 @@ type CleanNotification = {
   forProject: string;
   about: string;
 };
+
 export const getProjects = async (userId: string) => {
   try {
     let allMyrojects: any[] = await memberModel
@@ -52,7 +66,6 @@ export const getProjects = async (userId: string) => {
         };
       });
     }
-
     return cleanProjects;
   } catch (error) {
     console.log(error);
@@ -92,6 +105,7 @@ export const getPendingTasks = async (userId: string) => {
     console.log(error);
   }
 };
+
 export const getCompletedTasks = async (userId: string) => {
   try {
     let whereIamMember = await memberModel
@@ -127,12 +141,26 @@ export const getCompletedTasks = async (userId: string) => {
     console.log(error);
   }
 };
-export const getProjectDetails = async (userId: string, keyword: string) => {
+
+export const getProjectDetails = async (
+  userId: string,
+  parameterObj: Parameter,
+) => {
   try {
     let findProjects = await projectModel.find({
       $or: [
-        { title: { $regex: keyword.toString(), $options: "i" } },
-        { description: { $regex: keyword.toString(), $options: "i" } },
+        {
+          title: {
+            $regex: parameterObj.projectKeyword.toString(),
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: parameterObj.projectKeyword.toString(),
+            $options: "i",
+          },
+        },
       ],
     });
     if (!findProjects) return [];
@@ -209,19 +237,17 @@ export const getNotifications = async (userId: string) => {
     console.log(error);
   }
 };
-export const renameTitle = async (
-  userId: string,
-  keyword: string,
-  data: string,
-) => {
+
+export const renameTitle = async (userId: string, parameterObj: Parameter) => {
   try {
     console.log(
-      `Keyword actually received in func : ${keyword} & data is : ${data}`,
+      `Keyword actually received in func : ${parameterObj.projectKeyword} & data is : ${parameterObj.newProjectData}`,
     );
+    const data = parameterObj.newProjectData.trim();
     let project = await projectModel.findOne({
       $or: [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
+        { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+        { description: { $regex: parameterObj.projectKeyword, $options: "i" } },
       ],
     });
     if (!project) return [];
@@ -231,7 +257,7 @@ export const renameTitle = async (
     if (!areYouMember) return "You are not a member of this project";
     if (!areYouMember.isAdmin)
       return "Only admin can change the title of this project";
-    if (!data || data.toString().trim().length < 5) {
+    if (!data || data.toString().length < 5) {
       return "Project title cannot be less than 5 characters";
     }
     let changedProject = await projectModel.findByIdAndUpdate(
@@ -265,19 +291,20 @@ export const renameTitle = async (
     console.log(error);
   }
 };
+
 export const changeDescription = async (
   userId: string,
-  keyword: string,
-  data: string,
+  parameterObj: Parameter,
 ) => {
   try {
     console.log(
-      `Keyword actually received in func : ${keyword} & data is : ${data}`,
+      `Keyword actually received in func : ${parameterObj.projectKeyword} & data is : ${parameterObj.newProjectData}`,
     );
+    const data = parameterObj.newProjectData.trim();
     let project = await projectModel.findOne({
       $or: [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
+        { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+        { description: { $regex: parameterObj.projectKeyword, $options: "i" } },
       ],
     });
     if (!project) return [];
@@ -287,9 +314,8 @@ export const changeDescription = async (
     if (!areYouMember) return "You are not a member of this project";
     if (!areYouMember.isAdmin)
       return "Only admin can change the description of this project";
-    if (!data || data.toString().trim().length < 20) {
+    if (!data || data.toString().trim().length < 20)
       return "Project description cannot be less than 20 characters";
-    }
     let changedProject = await projectModel.findByIdAndUpdate(
       project._id,
       {
@@ -321,13 +347,19 @@ export const changeDescription = async (
     console.log(error);
   }
 };
-export const markAsComplete = async (userId: string, keyword: string) => {
+
+export const markAsComplete = async (
+  userId: string,
+  parameterObj: Parameter,
+) => {
   try {
-    console.log(`Keyword actually received in func : ${keyword}`);
+    console.log(
+      `Keyword actually received in func : ${parameterObj.projectKeyword}`,
+    );
     let project = await projectModel.findOne({
       $or: [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
+        { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+        { description: { $regex: parameterObj.projectKeyword, $options: "i" } },
       ],
     });
     if (!project) return [];
@@ -369,13 +401,19 @@ export const markAsComplete = async (userId: string, keyword: string) => {
     console.log(error);
   }
 };
-export const markAsInComplete = async (userId: string, keyword: string) => {
+
+export const markAsInComplete = async (
+  userId: string,
+  parameterObj: Parameter,
+) => {
   try {
-    console.log(`Keyword actually received in func : ${keyword}`);
+    console.log(
+      `Keyword actually received in func : ${parameterObj.projectKeyword}`,
+    );
     let project = await projectModel.findOne({
       $or: [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
+        { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+        { description: { $regex: parameterObj.projectKeyword, $options: "i" } },
       ],
     });
     if (!project) return [];
@@ -417,13 +455,16 @@ export const markAsInComplete = async (userId: string, keyword: string) => {
     console.log(error);
   }
 };
-export const markAsFailed = async (userId: string, keyword: string) => {
+
+export const markAsFailed = async (userId: string, parameterObj: Parameter) => {
   try {
-    console.log(`Keyword actually received in func : ${keyword}`);
+    console.log(
+      `Keyword actually received in func : ${parameterObj.projectKeyword}`,
+    );
     let project = await projectModel.findOne({
       $or: [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
+        { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+        { description: { $regex: parameterObj.projectKeyword, $options: "i" } },
       ],
     });
     if (!project) return [];
@@ -465,13 +506,19 @@ export const markAsFailed = async (userId: string, keyword: string) => {
     console.log(error);
   }
 };
-export const markAsNotFailed = async (userId: string, keyword: string) => {
+
+export const markAsNotFailed = async (
+  userId: string,
+  parameterObj: Parameter,
+) => {
   try {
-    console.log(`Keyword actually received in func : ${keyword}`);
+    console.log(
+      `Keyword actually received in func : ${parameterObj.projectKeyword}`,
+    );
     let project = await projectModel.findOne({
       $or: [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
+        { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+        { description: { $regex: parameterObj.projectKeyword, $options: "i" } },
       ],
     });
     if (!project) return [];
@@ -513,6 +560,168 @@ export const markAsNotFailed = async (userId: string, keyword: string) => {
     console.log(error);
   }
 };
+export const assignTask = async (userId: string, parameterObj: Parameter) => {
+  try {
+    let project = await projectModel
+      .findOne({
+        $or: [
+          { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+          {
+            description: { $regex: parameterObj.projectKeyword, $options: "i" },
+          },
+        ],
+      })
+      .select("_id title deadlineDate");
+    if (!project)
+      return `No project named ${parameterObj.projectKeyword} found`;
+    let areYouMember = await memberModel
+      .findOne({ user: userId, forProject: project._id })
+      .select("_id user isAdmin");
+    if (!areYouMember) return "You are not a member of this project";
+    let assignedToUser = await userModel
+      .findOne({
+        name: { $regex: parameterObj.userKeyword, $options: "i" },
+      })
+      .select("_id name");
+    if (!assignedToUser)
+      return `Member to whom you are trying to assign the task ${parameterObj.taskKeyword} could not be found, please enter correct member's name`;
+    let memberOfThatProject = await memberModel
+      .findOne({
+        user: assignedToUser._id,
+        forProject: project._id,
+      })
+      .select("_id");
+    await clearAllTasks(project._id);
+    if (!memberOfThatProject)
+      return `${assignedToUser.name} is not a member of the project ${parameterObj.projectKeyword}`;
+    const newTask = await taskModel.create({
+      task: parameterObj.taskKeyword,
+      assignedBy: areYouMember._id,
+      assignedTo: memberOfThatProject._id,
+      forProject: project._id,
+      addedAt: Date.now(),
+      isDone: false,
+    });
+    const cleanAssignedTask: CleanAssignedTask = {
+      task: newTask.task,
+      projectDeadine: getRealDate(project.deadlineDate),
+      projectTitle: project.title,
+      completed: false,
+      assignedTo: assignedToUser.name,
+    };
+    return cleanAssignedTask;
+  } catch (error) {
+    console.log(error);
+  }
+};
+export const completeTask = async (userId: string, parameterObj: Parameter) => {
+  try {
+    let project = await projectModel
+      .findOne({
+        $or: [
+          { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+          {
+            description: { $regex: parameterObj.projectKeyword, $options: "i" },
+          },
+        ],
+      })
+      .select("_id title deadlineDate");
+    if (!project)
+      return `No project named ${parameterObj.projectKeyword} found`;
+    let areYouMember = await memberModel
+      .findOne({ user: userId, forProject: project._id })
+      .select("_id user isAdmin");
+    console.log(
+      "You member ? : ",
+      areYouMember + " so member id is : ",
+      areYouMember._id,
+    );
+    if (!areYouMember) return "You are not a member of this project";
+    let task = await taskModel
+      .findOne({
+        task: { $regex: parameterObj.taskKeyword, $options: "i" },
+      })
+      .select("task assignedTo forProject");
+    if (!task)
+      return `No task like ${parameterObj.taskKeyword} could be found in ${project.title}`;
+    console.log(
+      "Task found : ",
+      task + " so task id assigned to id  : ",
+      task.assignedTo,
+    );
+    if (task.assignedTo.toString() != areYouMember._id.toString()) {
+      return `Task ${task.task} is not assigned to you`;
+    }
+    await clearAllTasks(project._id);
+    const updatedTask = await taskModel.findByIdAndUpdate(
+      task._id,
+      {
+        isDone: true,
+      },
+      { new: true },
+    );
+    const cleanAssignedTask: CleanTask = {
+      task: updatedTask.task,
+      projectDeadine: getRealDate(project.deadlineDate),
+      projectTitle: project.title,
+      completed: true,
+    };
+    return cleanAssignedTask;
+  } catch (error) {
+    console.log(error);
+  }
+};
+export const inCompleteTask = async (
+  userId: string,
+  parameterObj: Parameter,
+) => {
+  try {
+    let project = await projectModel
+      .findOne({
+        $or: [
+          { title: { $regex: parameterObj.projectKeyword, $options: "i" } },
+          {
+            description: { $regex: parameterObj.projectKeyword, $options: "i" },
+          },
+        ],
+      })
+      .select("_id title deadlineDate");
+    if (!project)
+      return `No project named ${parameterObj.projectKeyword} found`;
+    let areYouMember = await memberModel
+      .findOne({ user: userId, forProject: project._id })
+      .select("_id user isAdmin");
+    if (!areYouMember) return "You are not a member of this project";
+    let task = await taskModel
+      .findOne({
+        task: { $regex: parameterObj.taskKeyword, $options: "i" },
+      })
+      .select("task assignedTo forProject");
+    if (!task)
+      return `No task like ${parameterObj.taskKeyword} could be found in ${project.title}`;
+    if (task.assignedTo.toString() != areYouMember._id.toString()) {
+      return `Task ${task.task} is not assigned to you`;
+    }
+    await clearAllTasks(project._id);
+    const updatedTask = await taskModel.findByIdAndUpdate(
+      task._id,
+      {
+        isDone: false,
+      },
+      { new: true },
+    );
+    const cleanAssignedTask: CleanTask = {
+      task: updatedTask.task,
+      projectDeadine: getRealDate(project.deadlineDate),
+      projectTitle: project.title,
+      completed: false,
+    };
+    return cleanAssignedTask;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const toolChooser: any = {
   getProjects,
   getPendingTasks,
@@ -526,4 +735,7 @@ export const toolChooser: any = {
   markAsInComplete,
   markAsFailed,
   markAsNotFailed,
+  assignTask,
+  completeTask,
+  inCompleteTask,
 };

@@ -17,7 +17,7 @@ type PlanAction = {
   actions: [
     {
       tool: string;
-      parameters: any[];
+      parameters: any;
     },
   ];
   missingInfo: string;
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         botResponse.actions.map(async (action) => {
           let toolData: any;
           // console.log("Actions parameters are : ", action.parameters);
-          if (action.parameters && action.parameters.length > 0) {
+          if (action.parameters) {
             toolData = await executeTool(
               action.tool,
               userId,
@@ -90,20 +90,20 @@ export async function POST(req: NextRequest) {
     }
     await redis.del(`aiChatAllMessages:user:${userId}`);
     // console.log("Bot message : ", responseToUser);
-    let newUserMessage = await aichatModel.create([
-      {
-        messageFor: userId,
-        addedMs: Date.now(),
-        role: "user",
-        content,
-      },
-    ]);
-    let newBotMessage = await aichatModel.create({
-      messageFor: userId,
-      addedMs: Date.now(),
-      role: "assistant",
-      content: responseToUser,
-    });
+    // let newUserMessage = await aichatModel.create([
+    //   {
+    //     messageFor: userId,
+    //     addedMs: Date.now(),
+    //     role: "user",
+    //     content,
+    //   },
+    // ]);
+    // let newBotMessage = await aichatModel.create({
+    //   messageFor: userId,
+    //   addedMs: Date.now(),
+    //   role: "assistant",
+    //   content: responseToUser,
+    // });
     return NextResponse.json(
       {
         message: responseToUser,

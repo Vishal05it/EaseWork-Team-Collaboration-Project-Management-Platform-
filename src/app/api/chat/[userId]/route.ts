@@ -35,14 +35,15 @@ export async function GET(
       .sort({
         addedMs: -1,
       });
+    const reversedMessages = allMessages.reverse();
     await redis.set(
       `aiChatAllMessages:user:${userId}`,
-      JSON.stringify(allMessages.reverse()),
+      JSON.stringify(reversedMessages),
     );
     return NextResponse.json({
       message: "All bot messages found",
       success: true,
-      messages: allMessages.reverse(),
+      messages: reversedMessages,
     });
   } catch (error) {
     console.log(error);

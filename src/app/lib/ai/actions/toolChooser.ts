@@ -276,8 +276,8 @@ export const renameTitle = async (userId: string, parameterObj: Parameter) => {
         await clearAllProjects(member.user);
       }),
     );
-    const companyId = await userModel.findById(userId).select("companyId");
-    await clearProjectDetails(project._id, companyId);
+    const company = await userModel.findById(userId).select("companyId");
+    await clearProjectDetails(project._id, company.companyId);
     const cleanProject: CleanProject = {
       title: changedProject.title,
       description: changedProject.description.toString().slice(0, 30) + "...",
@@ -332,8 +332,8 @@ export const changeDescription = async (
         await clearAllProjects(member.user);
       }),
     );
-    const companyId = await userModel.findById(userId).select("companyId");
-    await clearProjectDetails(project._id, companyId);
+    const company = await userModel.findById(userId).select("companyId");
+    await clearProjectDetails(project._id, company.companyId);
     const cleanProject: CleanProject = {
       title: changedProject.title,
       description: changedProject.description.toString().slice(0, 30) + "...",
@@ -378,16 +378,34 @@ export const markAsComplete = async (
       },
       { new: true },
     );
-    const allMembersOfThatProject = await memberModel.find({
-      forProject: project._id,
-    });
+    const allMembersOfThatProject = await memberModel
+      .find({
+        forProject: project._id,
+      })
+      .select("user");
+    //  console.log("Members of that project : ", allMembersOfThatProject);
     await Promise.allSettled(
       allMembersOfThatProject.map(async (member) => {
         await clearAllProjects(member.user);
       }),
     );
-    const companyId = await userModel.findById(userId).select("companyId");
-    await clearProjectDetails(project._id, companyId);
+    const company = await userModel.findById(userId).select("companyId");
+    await clearProjectDetails(project._id, company.companyId);
+    await Promise.allSettled(
+      allMembersOfThatProject.map(async (member) => {
+        if (member.user.toString() != userId.toString()) {
+          await notificationModel.create({
+            byUser: userId,
+            forUser: member.user,
+            addedMs: Date.now(),
+            isRead: false,
+            on: "Complete",
+            action: "Add",
+            forProject: project._id,
+          });
+        }
+      }),
+    );
     const cleanProject: CleanProject = {
       title: changedProject.title,
       description: changedProject.description.toString().slice(0, 30) + "...",
@@ -423,7 +441,6 @@ export const markAsInComplete = async (
     if (!areYouMember) return "You are not a member of this project";
     if (!areYouMember.isAdmin)
       return "Only admin can mark this project as incomplete";
-
     let changedProject = await projectModel.findByIdAndUpdate(
       project._id,
       {
@@ -440,8 +457,21 @@ export const markAsInComplete = async (
         await clearAllProjects(member.user);
       }),
     );
-    const companyId = await userModel.findById(userId).select("companyId");
-    await clearProjectDetails(project._id, companyId);
+    const company = await userModel.findById(userId).select("companyId");
+    await clearProjectDetails(project._id, company.companyId);
+    allMembersOfThatProject.map(async (member) => {
+      if (member.user.toString() != userId.toString()) {
+        await notificationModel.create({
+          byUser: userId,
+          forUser: member.user,
+          addedMs: Date.now(),
+          isRead: false,
+          on: "Complete",
+          action: "Remove",
+          forProject: project._id,
+        });
+      }
+    });
     const cleanProject: CleanProject = {
       title: changedProject.title,
       description: changedProject.description.toString().slice(0, 30) + "...",
@@ -491,8 +521,21 @@ export const markAsFailed = async (userId: string, parameterObj: Parameter) => {
         await clearAllProjects(member.user);
       }),
     );
-    const companyId = await userModel.findById(userId).select("companyId");
-    await clearProjectDetails(project._id, companyId);
+    const company = await userModel.findById(userId).select("companyId");
+    await clearProjectDetails(project._id, company.companyId);
+    allMembersOfThatProject.map(async (member) => {
+      if (member.user.toString() != userId.toString()) {
+        await notificationModel.create({
+          byUser: userId,
+          forUser: member.user,
+          addedMs: Date.now(),
+          isRead: false,
+          on: "Project",
+          action: "Remove",
+          forProject: project._id,
+        });
+      }
+    });
     const cleanProject: CleanProject = {
       title: changedProject.title,
       description: changedProject.description.toString().slice(0, 30) + "...",
@@ -545,8 +588,21 @@ export const markAsNotFailed = async (
         await clearAllProjects(member.user);
       }),
     );
-    const companyId = await userModel.findById(userId).select("companyId");
-    await clearProjectDetails(project._id, companyId);
+    const company = await userModel.findById(userId).select("companyId");
+    await clearProjectDetails(project._id, company.companyId);
+    allMembersOfThatProject.map(async (member) => {
+      if (member.user.toString() != userId.toString()) {
+        await notificationModel.create({
+          byUser: userId,
+          forUser: member.user,
+          addedMs: Date.now(),
+          isRead: false,
+          on: "Project",
+          action: "Add",
+          forProject: project._id,
+        });
+      }
+    });
     const cleanProject: CleanProject = {
       title: changedProject.title,
       description: changedProject.description.toString().slice(0, 30) + "...",
@@ -602,6 +658,15 @@ export const assignTask = async (userId: string, parameterObj: Parameter) => {
       addedAt: Date.now(),
       isDone: false,
     });
+    await notificationModel.create({
+      byUser: userId,
+      forUser: memberOfThatProject._id,
+      addedMs: Date.now(),
+      isRead: false,
+      on: "Task",
+      action: "Add",
+      forProject: project._id,
+    });
     const cleanAssignedTask: CleanAssignedTask = {
       task: newTask.task,
       projectDeadine: getRealDate(project.deadlineDate),
@@ -650,6 +715,15 @@ export const completeTask = async (userId: string, parameterObj: Parameter) => {
       },
       { new: true },
     );
+    await notificationModel.create({
+      byUser: userId,
+      forUser: updatedTask.assignedBy,
+      addedMs: Date.now(),
+      isRead: false,
+      on: "Task",
+      action: "Complete",
+      forProject: project._id,
+    });
     const cleanAssignedTask: CleanTask = {
       task: updatedTask.task,
       projectDeadine: getRealDate(project.deadlineDate),

@@ -36,6 +36,7 @@ export async function GET(
         addedMs: -1,
       });
     const reversedMessages = allMessages.reverse();
+    console.log("Messages being retrieved as : ", reversedMessages);
     await redis.set(
       `aiChatAllMessages:user:${userId}`,
       JSON.stringify(reversedMessages),

@@ -12,6 +12,7 @@ export async function DELETE(
     );
     return NextResponse.json({
       message: "Cache updated",
+      success: true,
     });
   } catch (error) {
     console.log(error);

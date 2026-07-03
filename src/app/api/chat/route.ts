@@ -90,20 +90,20 @@ export async function POST(req: NextRequest) {
     }
     await redis.del(`aiChatAllMessages:user:${userId}`);
     // console.log("Bot message : ", responseToUser);
-    let newUserMessage = await aichatModel.create([
-      {
-        messageFor: userId,
-        addedMs: Date.now(),
-        role: "user",
-        content,
-      },
-    ]);
-    let newBotMessage = await aichatModel.create({
-      messageFor: userId,
-      addedMs: Date.now(),
-      role: "assistant",
-      content: responseToUser,
-    });
+    // let newUserMessage = await aichatModel.create([
+    //   {
+    //     messageFor: userId,
+    //     addedMs: Date.now(),
+    //     role: "user",
+    //     content,
+    //   },
+    // ]);
+    // let newBotMessage = await aichatModel.create({
+    //   messageFor: userId,
+    //   addedMs: Date.now(),
+    //   role: "assistant",
+    //   content: responseToUser,
+    // });
     return NextResponse.json(
       {
         message: responseToUser,

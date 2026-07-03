@@ -926,13 +926,22 @@ export default function ProjectDetailsPage() {
     // console.log("Current Member : ", currMember);
   }, [members]);
   useEffect(() => {
-    if (deadLineCalc(project.deadlineDate) <= 0 && project._id) {
-      // console.log(
-      //   `Dropping Project because project deadline is :${project.deadlineDate} and deadLineCalc is : ${deadLineCalc(project.deadlineDate)}`,
-      // );
+    if (
+      deadLineCalc(project.deadlineDate) <= 0 &&
+      project._id &&
+      !project.isFailed
+    ) {
+      const clearCache = async () => {
+        await clearAllProjects(user._id);
+        await clearProjectDetails(
+          params.projectId as string,
+          user.companyId._id,
+        );
+      };
+      clearCache();
       dropProject();
     }
-  }, [deadLineCalc(project.deadlineDate)]);
+  }, [deadLineCalc(project.deadlineDate), project.isDone, project.isFailed]);
   let unFinishedTasks = useMemo(() => {
     let count = 0;
     allTasks.map((elm) => {

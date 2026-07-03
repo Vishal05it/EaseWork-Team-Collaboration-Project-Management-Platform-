@@ -394,7 +394,7 @@ export const markAsComplete = async (
     await Promise.allSettled(
       allMembersOfThatProject.map(async (member) => {
         if (member.user.toString() != userId.toString()) {
-          await notificationModel.create({
+          let newNotification = await notificationModel.create({
             byUser: userId,
             forUser: member.user,
             addedMs: Date.now(),
@@ -403,9 +403,26 @@ export const markAsComplete = async (
             action: "Add",
             forProject: project._id,
           });
+          const sendNotification = await notificationModel
+            .findById(newNotification._id)
+            .populate("forProject")
+            .populate("byUser");
+
+          await fetch(`${process.env.NEXT_PUBLIC_SOCKET_URL}/emit`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              event: "project-completed",
+              userId: member.user,
+              payload: sendNotification,
+            }),
+          });
         }
       }),
     );
+
     const cleanProject: CleanProject = {
       title: changedProject.title,
       description: changedProject.description.toString().slice(0, 30) + "...",
@@ -461,7 +478,7 @@ export const markAsInComplete = async (
     await clearProjectDetails(project._id, company.companyId);
     allMembersOfThatProject.map(async (member) => {
       if (member.user.toString() != userId.toString()) {
-        await notificationModel.create({
+        let newNotification = await notificationModel.create({
           byUser: userId,
           forUser: member.user,
           addedMs: Date.now(),
@@ -470,8 +487,25 @@ export const markAsInComplete = async (
           action: "Remove",
           forProject: project._id,
         });
+        const sendNotification = await notificationModel
+          .findById(newNotification._id)
+          .populate("forProject")
+          .populate("byUser");
+
+        await fetch(`${process.env.NEXT_PUBLIC_SOCKET_URL}/emit`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            event: "project-unfinished",
+            userId: member.user,
+            payload: sendNotification,
+          }),
+        });
       }
     });
+
     const cleanProject: CleanProject = {
       title: changedProject.title,
       description: changedProject.description.toString().slice(0, 30) + "...",
@@ -525,7 +559,7 @@ export const markAsFailed = async (userId: string, parameterObj: Parameter) => {
     await clearProjectDetails(project._id, company.companyId);
     allMembersOfThatProject.map(async (member) => {
       if (member.user.toString() != userId.toString()) {
-        await notificationModel.create({
+        let newNotification = await notificationModel.create({
           byUser: userId,
           forUser: member.user,
           addedMs: Date.now(),
@@ -533,6 +567,22 @@ export const markAsFailed = async (userId: string, parameterObj: Parameter) => {
           on: "Project",
           action: "Remove",
           forProject: project._id,
+        });
+        const sendNotification = await notificationModel
+          .findById(newNotification._id)
+          .populate("forProject")
+          .populate("byUser");
+
+        await fetch(`${process.env.NEXT_PUBLIC_SOCKET_URL}/emit`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            event: "project-dropped",
+            userId: member.user,
+            payload: sendNotification,
+          }),
         });
       }
     });
@@ -592,7 +642,7 @@ export const markAsNotFailed = async (
     await clearProjectDetails(project._id, company.companyId);
     allMembersOfThatProject.map(async (member) => {
       if (member.user.toString() != userId.toString()) {
-        await notificationModel.create({
+        let newNotification = await notificationModel.create({
           byUser: userId,
           forUser: member.user,
           addedMs: Date.now(),
@@ -600,6 +650,22 @@ export const markAsNotFailed = async (
           on: "Project",
           action: "Add",
           forProject: project._id,
+        });
+        const sendNotification = await notificationModel
+          .findById(newNotification._id)
+          .populate("forProject")
+          .populate("byUser");
+
+        await fetch(`${process.env.NEXT_PUBLIC_SOCKET_URL}/emit`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            event: "project-restarted",
+            userId: member.user,
+            payload: sendNotification,
+          }),
         });
       }
     });
@@ -658,14 +724,30 @@ export const assignTask = async (userId: string, parameterObj: Parameter) => {
       addedAt: Date.now(),
       isDone: false,
     });
-    await notificationModel.create({
+    let newNotification = await notificationModel.create({
       byUser: userId,
-      forUser: memberOfThatProject._id,
+      forUser: assignedToUser._id,
       addedMs: Date.now(),
       isRead: false,
       on: "Task",
       action: "Add",
       forProject: project._id,
+    });
+    const sendNotification = await notificationModel
+      .findById(newNotification._id)
+      .populate("forProject")
+      .populate("byUser");
+
+    await fetch(`${process.env.NEXT_PUBLIC_SOCKET_URL}/emit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        event: "task-assigned",
+        userId: assignedToUser._id,
+        payload: sendNotification,
+      }),
     });
     const cleanAssignedTask: CleanAssignedTask = {
       task: newTask.task,
@@ -715,7 +797,7 @@ export const completeTask = async (userId: string, parameterObj: Parameter) => {
       },
       { new: true },
     );
-    await notificationModel.create({
+    let newNotification = await notificationModel.create({
       byUser: userId,
       forUser: updatedTask.assignedBy,
       addedMs: Date.now(),
@@ -723,6 +805,21 @@ export const completeTask = async (userId: string, parameterObj: Parameter) => {
       on: "Task",
       action: "Complete",
       forProject: project._id,
+    });
+    const sendNotification = await notificationModel
+      .findById(newNotification._id)
+      .populate("byUser")
+      .populate("forProject");
+    await fetch(`${process.env.NEXT_PUBLIC_SOCKET_URL}/emit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        event: "task-completed",
+        userId: updatedTask.assignedBy,
+        payload: sendNotification,
+      }),
     });
     const cleanAssignedTask: CleanTask = {
       task: updatedTask.task,
